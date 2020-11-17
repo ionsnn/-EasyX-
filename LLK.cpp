@@ -1,41 +1,49 @@
+ 
 #include<stdio.h>
 #include<graphics.h>
-#include<conio.h>
-
+#include<easyx.h>
+#include<time.h>
+#include<stdlib.h>
 #define IMG_SIZE 40
 #define MAP_SIZE 10
 #define ICON_NUM 10
 #define WIN_SIZE (MAP_SIZE*IMG_SIZE+2*IMG_SIZE)
-int map[MAP_SIZE + 2][MAP_SIZE + 2];
+int map[MAP_SIZE+2][MAP_SIZE+2];
 IMAGE img_total;
-IMAGE img_icon[ICON_NUM];
+IMAGE img_icon[ICON_NUM+11];
+IMAGE img_over;
 //储存两次点击的数组的下标
-POINT begin = { -1,-1 }, end = { -1,-1 };
+POINT begin , end;
+struct index
+{
+	int row;
+	int col;
+
+}_point;
 enum STATE
 {
 	BEGIN,         //相当于1
 	END,           //相当于0
 };
 int flag = BEGIN;
-
 //游戏初始化加载
 void GameLoad()
 {
 	//窗口化图片
-	initgraph(WIN_SIZE, WIN_SIZE, SHOWCONSOLE);
-	loadimage(&img_icon[0], "./res/001.jpg", 40, 40);
-	loadimage(&img_icon[1], "./res/002.jpg", 40, 40);
-	loadimage(&img_icon[2], "./res/003.jpg", 40, 40);
-	loadimage(&img_icon[3], "./res/004.jpg", 40, 40);
-	loadimage(&img_icon[4], "./res/005.jpg", 40, 40);
-	loadimage(&img_icon[5], "./res/006.jpg", 40, 40);
-	loadimage(&img_icon[6], "./res/007.jpg", 40, 40);
-	loadimage(&img_icon[7], "./res/008.jpg", 40, 40);
-	loadimage(&img_icon[8], "./res/009.jpg", 40, 40);
-	loadimage(&img_icon[9], "./res/010.jpg", 40, 40);
-	loadimage(&img_total, "./res/background.jpg", WIN_SIZE, WIN_SIZE);
+	initgraph(WIN_SIZE, WIN_SIZE,SHOWCONSOLE);
+	loadimage(&img_icon[1], "./res/001.jpg", 40, 40);
+	loadimage(&img_icon[2], "./res/002.jpg", 40, 40);
+	loadimage(&img_icon[3], "./res/003.jpg", 40, 40);
+	loadimage(&img_icon[4], "./res/004.jpg", 40, 40);
+	loadimage(&img_icon[5], "./res/005.jpg", 40, 40);
+	loadimage(&img_icon[6], "./res/006.jpg", 40, 40);
+	loadimage(&img_icon[7], "./res/007.jpg", 40, 40);
+	loadimage(&img_icon[8], "./res/008.jpg", 40, 40);
+	loadimage(&img_icon[9], "./res/009.jpg", 40, 40);
+	loadimage(&img_icon[10], "./res/010.jpg", 40, 40);
+	loadimage(&img_total, "./res/backgroud.jpg", WIN_SIZE, WIN_SIZE);
 	//图标赋值于数组
-	int temp = 1, _count = 1;
+	int temp = 1,_count=1;
 	for (int i = 1; i <= MAP_SIZE; i++)
 	{
 		for (int k = 1; k <= MAP_SIZE; k++)
@@ -48,8 +56,9 @@ void GameLoad()
 			_count++;
 		}
 	}
-
+	
 	//得到一组随机的数据
+	srand((int)time(0));
 	for (int i = 1; i <= MAP_SIZE; i++)
 	{
 		for (int k = 1; k <= MAP_SIZE; k++)
@@ -64,9 +73,15 @@ void GameLoad()
 	}
 }
 
+bool isBlocked(int x, int y)
+{
+	return map[x][y];
+}
+
 void GameDraw()
 {
 	//载入图标
+
 	putimage(0, 0, &img_total);
 	for (int i = 1; i <= MAP_SIZE; i++)
 	{
@@ -74,16 +89,20 @@ void GameDraw()
 		{
 			if (map[i][k] > 0)
 			{
-				putimage(k * IMG_SIZE, i * IMG_SIZE, &img_icon[map[i][k] - 1]);
+				putimage(k * IMG_SIZE, i * IMG_SIZE, &img_icon[map[i][k]]);
 			}
 		}
+	}
+	if (isBlocked(_point.row, _point.col))
+	{
+		rectangle(_point.col * IMG_SIZE,_point.row * IMG_SIZE, _point.col * IMG_SIZE + IMG_SIZE,_point.row * IMG_SIZE + IMG_SIZE);
 	}
 }
 void Show()
 {
-	for (int i = 0; i <= MAP_SIZE + 2; i++)
+	for (int i = 0; i <=MAP_SIZE + 2; i++)
 	{
-		for (int k = 0; k <= MAP_SIZE + 2; k++)
+		for (int k = 0; k <=MAP_SIZE + 2; k++)
 		{
 			printf("%2d", map[i][k]);
 
@@ -94,36 +113,36 @@ void Show()
 //鼠标控制消除，获取鼠标消息
 void GameMouse()
 {
-	//printf("into GameMOuse\n");////////////
+	setlinecolor(RED);
+	setlinestyle(PS_SOLID, 5);
 	//检测是否有鼠标操作
 	if (MouseHit())
 	{
-		//printf("in mousehit\n");/////////////////
 		MOUSEMSG msg = GetMouseMsg();
+		if (msg.uMsg == WM_LBUTTONDOWN)
+		{
+			_point.row = msg.y / IMG_SIZE;
+			_point.col = msg.x / IMG_SIZE;
+		}
 		if (msg.uMsg == WM_LBUTTONDOWN)
 		{
 			if (flag == BEGIN)
 			{
 				begin.x = msg.y / IMG_SIZE;
 				begin.y = msg.x / IMG_SIZE;
+				printf("temp1(%d,%d)\n", begin.x, begin.y);
 				flag = END;
 			}
 			else if (flag == END)
 			{
-				end.x = msg.y / IMG_SIZE;
-				end.y = msg.x / IMG_SIZE;
+			    end.x = msg.y / IMG_SIZE;
+			    end.y = msg.x / IMG_SIZE;
+				printf("temp2(%d,%d)\n", end.x, end.y);
 				flag = BEGIN;
 			}
 			printf("begin(%d,%d),end(%d,%d)\n", begin.x, begin.y, end.x, end.y);
 		}
 	}
-	//else printf("no mousehit\n");//////////////////////////////////
-}
-
-//判断某一点是否有图片，没有为0
-int isBlocked(int x, int y)
-{
-	return map[x][y];
 }
 //水平方向是否能消除
 bool horizon(POINT begin, POINT end)
@@ -176,7 +195,7 @@ bool vertical(POINT begin, POINT end)
 	return true;
 }
 //一个拐点
-bool turn_one(POINT begin, POINT end)
+bool turn_once(POINT begin, POINT end)
 {
 	//不能点击同一个
 	if (begin.x == end.x && begin.y == end.y)
@@ -260,34 +279,26 @@ bool turn_two(POINT begin, POINT end)
 	}
 	return b;
 }
-//结束
 void GameOver()
 {
-	initgraph(280, 1);
+	initgraph(WIN_SIZE/2, WIN_SIZE/2);
 	HWND hWnd = GetHWnd();            // 获取窗口名称句柄
-	SetWindowText(hWnd, "Congratulations!!!");
-	//setbkcolor(WHITE);
-	//cleardevice();
-	//RECT r = { 0, 0, 300, 200 };
-	//settextcolor(10000000);
-	//settextstyle(27, 0, _T("Consolas"));
-	//drawtext(_T("Congratulations!!!"), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-	_getch();
-	closegraph();
+	SetWindowText(hWnd, "YOU WIN!!!");
+	loadimage(&img_over, "./res/gameover.jpg", WIN_SIZE / 2, WIN_SIZE / 2);
 }
-
 int main()
 {
 	GameLoad();
 	Show();
+	GameDraw();
 	BeginBatchDraw();
-
 	while (1)
 	{
-		GameDraw();
+		
 		FlushBatchDraw();
 		GameMouse();
-		//消除操作，消除就是让数组的值等于0
+		GameDraw();
+		////消除操作，消除就是让数组的值等于0
 		if (map[begin.x][begin.y] == map[end.x][end.y])
 		{
 			if (horizon(begin, end))
@@ -300,7 +311,7 @@ int main()
 				map[begin.x][begin.y] = 0;
 				map[end.x][end.y] = 0;
 			}
-			else if (turn_one(begin, end))
+			else if (turn_once(begin,end))
 			{
 				map[begin.x][begin.y] = 0;
 				map[end.x][end.y] = 0;
@@ -310,17 +321,26 @@ int main()
 				map[begin.x][begin.y] = 0;
 				map[end.x][end.y] = 0;
 			}
-		}
-		int sum = 0;
-		for (int i = 0; i < MAP_SIZE + 1; i++)
-		{
-			for (int k = 0; k < MAP_SIZE + 1; k++)
+			int sum = 0;
+			for (int i = 0; i < MAP_SIZE + 2; i++)
 			{
-				sum = sum + map[i][k];
+				for (int k = 0; k < MAP_SIZE + 2; k++)
+				{
+					sum = sum + map[i][k];
+				}
 			}
+			if (sum == 0) break;
 		}
-		if (sum == 0) break;
 	}
+	BeginBatchDraw();
 	GameOver();
+	while (1)
+	{
+		putimage(0, 0, &img_over);
+		EndBatchDraw();
+	}
+	printf("over");
 	return 0;
 }
+
+
